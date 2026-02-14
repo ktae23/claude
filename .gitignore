@@ -1,0 +1,16 @@
+# Generated files
+skills/til-viewer/assets/til-viewer.html
+skills/til-viewer/assets/algorithm-practice.html
+
+# Machine-specific settings
+skills/til-viewer/.claude/
+**/settings.local.json
+
+# OS files
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Backup files created by install.sh
+*.backup.*
