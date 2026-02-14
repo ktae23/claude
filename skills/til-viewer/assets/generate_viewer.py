@@ -188,7 +188,6 @@ def main():
     <script src="lib/marked.min.js"></script>
     <script src="lib/fuse.min.js"></script>
     <script src="lib/highlight/highlight.min.js"></script>
-    <script src="lib/html2pdf.bundle.min.js"></script>
     <script>const TIL_DATA = {json_str};</script>
     <script>{viewer_js}</script>
 </body>
