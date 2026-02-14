@@ -117,9 +117,27 @@ def main():
             <div id="toc-list"></div>
         </div>
     </div>
+    <div class="quick-actions" id="quick-actions">
+        <button class="quick-btn" id="pdf-download-btn" onclick="downloadPDF()" title="PDF 다운로드 (P)" style="display:none">📥</button>
+        <button class="quick-btn" onclick="showShortcuts()" title="단축키 (?)">?</button>
+        <button class="quick-btn" onclick="scrollToTop()" title="맨 위로">&#8593;</button>
+    </div>
+
+    <div class="shortcuts-modal" id="shortcuts-modal">
+        <h3>키보드 단축키</h3>
+        <div class="shortcut-item"><span>이전 문서</span><span class="shortcut-key">&#8592;</span></div>
+        <div class="shortcut-item"><span>다음 문서</span><span class="shortcut-key">&#8594;</span></div>
+        <div class="shortcut-item"><span>검색</span><span class="shortcut-key">Ctrl+K</span></div>
+        <div class="shortcut-item"><span>테마 전환</span><span class="shortcut-key">T</span></div>
+        <div class="shortcut-item"><span>PDF 다운로드</span><span class="shortcut-key">P</span></div>
+        <div class="shortcut-item"><span>맨 위로</span><span class="shortcut-key">Home</span></div>
+        <div class="shortcut-item"><span>닫기</span><span class="shortcut-key">Esc</span></div>
+    </div>
+
     <script src="assets/lib/marked.min.js"></script>
     <script src="assets/lib/fuse.min.js"></script>
     <script src="assets/lib/highlight/highlight.min.js"></script>
+    <script src="assets/lib/html2pdf.bundle.min.js"></script>
     <script>const TIL_DATA = {json_str};</script>
     <script src="assets/js/viewer.js"></script>
 </body>

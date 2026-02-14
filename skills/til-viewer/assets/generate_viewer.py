@@ -103,6 +103,16 @@ def main():
     json_str = json.dumps(til_data, ensure_ascii=False)
     json_str = json_str.replace("</script>", "<\\/script>")
 
+    # viewer.js/css 인라인 (file:// 프로토콜 캐시 문제 방지)
+    viewer_js_path = os.path.join(ASSETS_PATH, "js", "viewer.js")
+    with open(viewer_js_path, "r", encoding="utf-8") as f:
+        viewer_js = f.read()
+    viewer_js = viewer_js.replace("</script>", "<\\/script>")
+
+    viewer_css_path = os.path.join(ASSETS_PATH, "css", "viewer.css")
+    with open(viewer_css_path, "r", encoding="utf-8") as f:
+        viewer_css = f.read()
+
     # 3. HTML 생성
     html_content = f"""<!DOCTYPE html>
 <html lang="ko">
@@ -110,7 +120,7 @@ def main():
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TIL Viewer</title>
-    <link rel="stylesheet" href="css/viewer.css">
+    <style>{viewer_css}</style>
     <link rel="stylesheet" href="lib/highlight/github.min.css" id="hljs-light">
     <link rel="stylesheet" href="lib/highlight/github-dark.min.css" id="hljs-dark" disabled>
 </head>
@@ -158,7 +168,8 @@ def main():
         </div>
     </div>
 
-    <div class="quick-actions">
+    <div class="quick-actions" id="quick-actions">
+        <button class="quick-btn" id="pdf-download-btn" onclick="downloadPDF()" title="PDF 다운로드 (P)" style="display:none">📥</button>
         <button class="quick-btn" onclick="showShortcuts()" title="단축키 (?)">?</button>
         <button class="quick-btn" onclick="scrollToTop()" title="맨 위로">&#8593;</button>
     </div>
@@ -170,14 +181,16 @@ def main():
         <div class="shortcut-item"><span>검색</span><span class="shortcut-key">Ctrl+K</span></div>
         <div class="shortcut-item"><span>테마 전환</span><span class="shortcut-key">T</span></div>
         <div class="shortcut-item"><span>맨 위로</span><span class="shortcut-key">Home</span></div>
+        <div class="shortcut-item"><span>PDF 다운로드</span><span class="shortcut-key">P</span></div>
         <div class="shortcut-item"><span>닫기</span><span class="shortcut-key">Esc</span></div>
     </div>
 
     <script src="lib/marked.min.js"></script>
     <script src="lib/fuse.min.js"></script>
     <script src="lib/highlight/highlight.min.js"></script>
+    <script src="lib/html2pdf.bundle.min.js"></script>
     <script>const TIL_DATA = {json_str};</script>
-    <script src="js/viewer.js"></script>
+    <script>{viewer_js}</script>
 </body>
 </html>"""
 
