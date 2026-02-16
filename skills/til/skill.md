@@ -10,7 +10,7 @@ TIL(Today I Learned) 저장소에 학습 내용을 기록하고 관리합니다.
 
 ## TIL 저장소 정보
 
-- 저장소 경로: $TIL_ROOT
+- 저장소 경로: /Users/buzz/til
 - 카테고리별 폴더 구조: java/, domain/, spring/, docker/, database/ 등
 
 ## 경로 설정 지침
@@ -38,7 +38,7 @@ TIL(Today I Learned) 저장소에 학습 내용을 기록하고 관리합니다.
    - 사용자가 "Other"를 선택하면 직접 경로 입력
 
 3. 확인된 경로로 이 skill.md 파일의 `저장소 경로` 값을 업데이트합니다:
-   - `- 저장소 경로: $TIL_ROOT` → `- 저장소 경로: /Users/username/til`
+   - `- 저장소 경로: /Users/buzz/til` → `- 저장소 경로: /Users/username/til`
 
 **이후 실행에서는 이 단계를 건너뜁니다.**
 

@@ -1,12 +1,12 @@
 ---
 name: sync-claude
-description: 로컬 Claude Code 설정(스킬, 커맨드, 훅, 에이전트)을 포터블 레포에 동기화합니다.
+description: 로컬 Claude Code 설정(스킬, 커맨드, 훅, 에이전트, statusline)을 포터블 레포에 동기화합니다.
 allowed-tools: Bash, Read, Write, Glob, Grep, Edit, AskUserQuestion
 ---
 
 # sync-claude
 
-로컬 `~/.claude/` 디렉토리의 스킬, 커맨드, 훅, 에이전트를 `~/claude` 포터블 레포에 동기화합니다.
+로컬 `~/.claude/` 디렉토리의 스킬, 커맨드, 훅, 에이전트, statusline을 `~/claude` 포터블 레포에 동기화합니다.
 
 ## 레포 경로 탐지
 
@@ -25,7 +25,7 @@ echo "REPO_DIR: $REPO_DIR"
 
 ### Step 1. 로컬 항목 스캔
 
-다음 4개 디렉토리를 스캔하여 레포에 아직 없는 항목을 찾습니다:
+다음 5개 영역을 스캔하여 레포에 아직 없는 항목을 찾습니다:
 
 ```bash
 # Skills: 디렉토리 단위
@@ -58,6 +58,13 @@ if [ -d ~/.claude/agents ]; then
         [ -f "$REPO_DIR/agents/$name" ] || echo "agent: $name"
     done
 fi
+
+# Statusline: 루트 스크립트 파일 (statusline.sh 등)
+for f in ~/.claude/statusline*; do
+    [ -f "$f" ] || continue
+    name=$(basename "$f")
+    [ -f "$REPO_DIR/$name" ] || echo "statusline: $name"
+done
 ```
 
 **이미 심링크로 연결된 항목은 "레포에 있는 항목"으로 간주합니다.**
@@ -89,6 +96,11 @@ mkdir -p $REPO_DIR/{type}/
 cp ~/.claude/{type}/{name} $REPO_DIR/{type}/{name}
 ```
 
+**Statusline (루트 파일):**
+```bash
+cp ~/.claude/{name} $REPO_DIR/{name}
+```
+
 ### Step 4. 이식성 검사
 
 복사된 파일에서 하드코딩된 경로를 검색합니다:
@@ -118,6 +130,12 @@ ln -s $REPO_DIR/skills/{name} ~/.claude/skills/{name}
 ```bash
 mv ~/.claude/commands/{name} ~/.claude/commands/{name}.backup.$TIMESTAMP
 ln -s $REPO_DIR/commands/{name} ~/.claude/commands/{name}
+```
+
+**Statusline:**
+```bash
+mv ~/.claude/{name} ~/.claude/{name}.backup.$TIMESTAMP
+ln -s $REPO_DIR/{name} ~/.claude/{name}
 ```
 
 ### Step 6. Git 커밋 & Push

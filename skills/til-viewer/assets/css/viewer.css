@@ -140,7 +140,7 @@ body {
 /* ========================================
    LAYOUT
    ======================================== */
-.container {
+.container, .main-container {
     display: flex;
     margin-top: 60px;
     height: calc(100vh - 60px);
@@ -189,6 +189,10 @@ body {
     font-size: 0.9rem;
     font-weight: 500;
     transition: opacity 0.2s;
+}
+
+.special-link + .special-link {
+    margin-top: 8px;
 }
 
 .special-link:hover {
@@ -277,12 +281,70 @@ body {
     opacity: 0.7;
 }
 
+.category-print-btn {
+    margin-left: 6px;
+    font-size: 0.75rem;
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.category-title:hover .category-print-btn {
+    opacity: 0.6;
+}
+
+.category-print-btn:hover {
+    opacity: 1 !important;
+}
+
 .file-list {
     display: block;
 }
 
 .file-list.collapsed {
     display: none;
+}
+
+/* Subcategory */
+.subcategory {
+    margin-top: 4px;
+}
+
+.subcategory-title {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    padding-left: 20px;
+    letter-spacing: 0.3px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    user-select: none;
+    transition: color 0.2s;
+}
+
+.subcategory-title:hover {
+    color: var(--text-primary);
+}
+
+.subcategory-count {
+    margin-left: auto;
+    font-size: 0.65rem;
+    opacity: 0.7;
+}
+
+.subcategory-files {
+    display: block;
+}
+
+.subcategory-files.collapsed {
+    display: none;
+}
+
+.subcategory-files .file-item {
+    padding-left: 28px;
 }
 
 .file-item {
@@ -484,6 +546,43 @@ body {
     cursor: pointer;
 }
 
+/* DOCUMENT NAVIGATION (Prev/Next) */
+.doc-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-color);
+}
+
+.doc-nav-btn {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--bg-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    max-width: 48%;
+    min-width: 0;
+    text-decoration: none;
+    color: var(--text-primary);
+}
+
+.doc-nav-btn:hover {
+    border-color: var(--accent-color);
+    background: var(--bg-primary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.doc-nav-next { align-items: flex-end; margin-left: auto; text-align: right; }
+.doc-nav-arrow { font-size: 1.2rem; color: var(--accent-color); font-weight: 600; }
+.doc-nav-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+.doc-nav-title { font-size: 0.9rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+
 /* ========================================
    TOC PANEL
    ======================================== */
@@ -548,7 +647,7 @@ body {
 /* ========================================
    OVERLAY (Mobile)
    ======================================== */
-.overlay {
+.overlay, .sidebar-overlay {
     display: none;
     position: fixed;
     top: 60px;
@@ -559,7 +658,7 @@ body {
     z-index: 40;
 }
 
-.overlay.show {
+.overlay.show, .sidebar-overlay.show {
     display: block;
 }
 
@@ -636,7 +735,7 @@ body {
 /* ========================================
    MOBILE MENU
    ======================================== */
-.menu-toggle {
+.menu-toggle, .menu-button {
     display: none;
     background: none;
     border: none;
@@ -645,16 +744,28 @@ body {
     color: var(--text-primary);
 }
 
+.toc-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.3rem;
+    cursor: pointer;
+    color: var(--text-primary);
+    padding: 4px 8px;
+}
+
 /* ========================================
    RESPONSIVE
    ======================================== */
 @media (max-width: 1024px) {
-    .toc-panel {
-        display: none;
+    .toc-toggle {
+        display: block;
     }
-}
 
-@media (max-width: 768px) {
+    .menu-toggle, .menu-button {
+        display: block;
+    }
+
     .sidebar {
         position: fixed;
         left: -280px;
@@ -668,12 +779,26 @@ body {
         left: 0;
     }
 
-    .content-area {
-        padding: 24px;
+    .toc-panel {
+        position: fixed;
+        right: -260px;
+        top: 60px;
+        height: calc(100vh - 60px);
+        width: 240px;
+        z-index: 50;
+        transition: right 0.3s;
+        border-left: 1px solid var(--border-color);
+        box-shadow: -2px 0 8px rgba(0,0,0,0.1);
     }
 
-    .menu-toggle {
-        display: block;
+    .toc-panel.open {
+        right: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .content-area {
+        padding: 24px;
     }
 
     .header h1 {
@@ -688,21 +813,148 @@ body {
         max-width: 200px;
     }
 
+    .category-print-btn {
+        opacity: 0.5;
+    }
+
     .quick-actions {
         bottom: 16px;
         right: 16px;
     }
+
+    /* 선택 모드 시 quick-actions를 select-bar 위로 올림 */
+    .quick-actions.has-select-bar {
+        bottom: 72px;
+    }
+
+    /* 선택 바 모바일 레이아웃 */
+    #select-bar {
+        flex-wrap: wrap;
+        padding: 10px 16px;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+        gap: 8px;
+    }
+
+    #select-bar span {
+        font-size: 0.85rem;
+    }
+
+    #select-bar button {
+        padding: 10px 14px;
+        font-size: 0.85rem;
+    }
+
+    #select-download-btn {
+        width: 100%;
+        margin-left: 0;
+        text-align: center;
+        padding: 12px;
+    }
+
+    /* 체크박스 터치 영역 확대 */
+    .file-select-cb {
+        transform: scale(1.4);
+        margin-right: 12px;
+    }
+
+    /* 카테고리 전체선택 터치 영역 */
+    .category-select-all {
+        font-size: 1.1rem;
+        padding: 4px 8px;
+    }
+
+    .doc-nav { flex-direction: column; gap: 12px; margin-top: 32px; }
+    .doc-nav-btn { max-width: 100%; }
+}
+
+/* ========================================
+   SELECT MODE & BATCH PDF
+   ======================================== */
+.file-select-cb {
+    margin-right: 8px;
+    transform: scale(1.2);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.category-select-all {
+    margin-left: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.category-select-all:hover {
+    opacity: 1;
+}
+
+#select-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--accent-color);
+    color: white;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 150;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
+}
+
+#select-bar span {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+#select-bar button {
+    padding: 8px 16px;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+#select-bar button:hover:not(:disabled) {
+    background: rgba(255,255,255,0.3);
+}
+
+#select-bar button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#select-download-btn {
+    margin-left: auto;
 }
 
 /* ========================================
    PRINT STYLES
    ======================================== */
+#print-overlay {
+    display: none;
+}
+
 @media print {
     .header, .sidebar, .toc-panel, .quick-actions,
     .overlay, .search-container, .progress-bar,
-    .shortcuts-modal { display: none !important; }
+    .shortcuts-modal, .doc-nav { display: none !important; }
     .content-area { padding: 0 !important; overflow: visible !important; }
     .content-inner { max-width: 100% !important; }
     .container, .main-container { display: block !important; }
     pre { white-space: pre-wrap !important; word-break: break-all !important; }
+
+    /* Overlay print mode: body.print-overlay-active일 때만 활성화 */
+    body.print-overlay-active > *:not(#print-overlay) {
+        display: none !important;
+    }
+    body.print-overlay-active #print-overlay {
+        display: block !important;
+        max-width: 100% !important;
+    }
 }

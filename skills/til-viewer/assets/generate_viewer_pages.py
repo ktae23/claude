@@ -40,6 +40,7 @@ def main():
             continue
         category = parts[0]
         filename = parts[-1]
+        subcategory = parts[1] if len(parts) >= 3 else None
 
         with open(md_file, "r", encoding="utf-8") as f:
             content = f.read()
@@ -54,22 +55,32 @@ def main():
         total_lines += lines
 
         if category not in categories:
-            categories[category] = {"files": []}
+            categories[category] = {"files": [], "subcategories": {}}
 
-        categories[category]["files"].append({
+        file_entry = {
             "filename": filename,
             "title": title,
             "path": rel_path,
             "content": content,
             "size": len(content.encode("utf-8")),
             "lines": lines
-        })
+        }
+
+        if subcategory:
+            if subcategory not in categories[category]["subcategories"]:
+                categories[category]["subcategories"][subcategory] = {"files": []}
+            categories[category]["subcategories"][subcategory]["files"].append(file_entry)
+        else:
+            categories[category]["files"].append(file_entry)
 
     # 2. JSON 데이터 생성
     til_data = {
         "categories": categories,
         "metadata": {
-            "totalFiles": sum(len(cat["files"]) for cat in categories.values()),
+            "totalFiles": sum(
+                len(cat["files"]) + sum(len(sub["files"]) for sub in cat.get("subcategories", {}).values())
+                for cat in categories.values()
+            ),
             "totalCategories": len(categories),
             "totalLines": total_lines,
             "generatedAt": datetime.now().isoformat()
@@ -79,14 +90,17 @@ def main():
     # HTML script 태그 내에서 안전하게 사용하기 위해 이스케이프
     json_str = json_str.replace("</", "<\\/").replace("<!--", "<\\!--")
 
+    # 캐시 버스팅용 타임스탬프
+    cache_bust = int(datetime.now().timestamp())
+
     # 3. HTML 생성 (상대 경로 사용)
     html_content = f"""<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TIL Viewer</title>
-    <link rel="stylesheet" href="assets/css/viewer.css">
+    <title>ktae23 학습저장소</title>
+    <link rel="stylesheet" href="assets/css/viewer.css?v={cache_bust}">
     <link rel="stylesheet" href="assets/lib/highlight/github.min.css" id="hljs-light">
     <link rel="stylesheet" href="assets/lib/highlight/github-dark.min.css" id="hljs-dark" disabled>
 </head>
@@ -94,16 +108,18 @@ def main():
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
     <div class="header">
         <button class="menu-button" id="menu-button">☰</button>
-        <h1>TIL Viewer</h1>
+        <h1>ktae23 학습저장소</h1>
         <div class="search-container">
             <input type="text" id="search-input" placeholder="Search files and content... (Ctrl+K)" autocomplete="off" />
         </div>
+        <button class="toc-toggle" id="toc-toggle" onclick="toggleTOC()" title="목차">≡</button>
         <button class="theme-toggle" id="theme-toggle">Dark</button>
     </div>
     <div class="main-container">
         <div class="sidebar" id="sidebar">
             <div class="special-links">
                 <a href="algorithm-practice.html" class="special-link">📚 Algorithm Practice</a>
+                <a href="https://www.linkedin.com/in/ktae23" class="special-link" target="_blank">🔗 LinkedIn</a>
             </div>
             <div id="file-list"></div>
         </div>
@@ -118,7 +134,7 @@ def main():
         </div>
     </div>
     <div class="quick-actions" id="quick-actions">
-        <button class="quick-btn" id="pdf-download-btn" onclick="downloadPDF()" title="PDF 다운로드 (P)" style="display:none">📥</button>
+        <button class="quick-btn" id="pdf-download-btn" onclick="printDocument()" title="인쇄 / PDF 저장 (P)" style="display:none">🖨️</button>
         <button class="quick-btn" onclick="showShortcuts()" title="단축키 (?)">?</button>
         <button class="quick-btn" onclick="scrollToTop()" title="맨 위로">&#8593;</button>
     </div>
@@ -129,7 +145,7 @@ def main():
         <div class="shortcut-item"><span>다음 문서</span><span class="shortcut-key">&#8594;</span></div>
         <div class="shortcut-item"><span>검색</span><span class="shortcut-key">Ctrl+K</span></div>
         <div class="shortcut-item"><span>테마 전환</span><span class="shortcut-key">T</span></div>
-        <div class="shortcut-item"><span>PDF 다운로드</span><span class="shortcut-key">P</span></div>
+        <div class="shortcut-item"><span>인쇄 / PDF 저장</span><span class="shortcut-key">P</span></div>
         <div class="shortcut-item"><span>맨 위로</span><span class="shortcut-key">Home</span></div>
         <div class="shortcut-item"><span>닫기</span><span class="shortcut-key">Esc</span></div>
     </div>
@@ -138,7 +154,7 @@ def main():
     <script src="assets/lib/fuse.min.js"></script>
     <script src="assets/lib/highlight/highlight.min.js"></script>
     <script>const TIL_DATA = {json_str};</script>
-    <script src="assets/js/viewer.js"></script>
+    <script src="assets/js/viewer.js?v={cache_bust}"></script>
 </body>
 </html>"""
 

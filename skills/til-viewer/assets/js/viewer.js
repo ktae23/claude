@@ -4,42 +4,6 @@
 // Note: TIL_DATA is injected inline in the HTML file
 
 // ========================================
-// PDF PRINT TEMPLATE (window.print() 벡터 방식용)
-// ========================================
-const PDF_PRINT_TEMPLATE = `<!DOCTYPE html>
-<html lang="ko"><head><meta charset="UTF-8"><style>
-@page { margin: 15mm; }
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',Roboto,sans-serif;
-  color:#212529; line-height:1.6; background:#fff; }
-.content-inner { max-width:100%; }
-.content-inner h1 { font-size:2rem; margin-bottom:8px; padding-bottom:16px; border-bottom:2px solid #3182f6; }
-.content-inner h2 { font-size:1.5rem; margin:32px 0 16px; padding-bottom:8px; border-bottom:1px solid #dee2e6; }
-.content-inner h3 { font-size:1.25rem; margin:24px 0 12px; color:#3182f6; }
-.content-inner h4 { font-size:1.1rem; margin:20px 0 10px; }
-.content-inner p { margin-bottom:16px; }
-.content-inner ul,.content-inner ol { margin-bottom:16px; padding-left:24px; }
-.content-inner li { margin-bottom:8px; }
-.content-inner pre { background:#f4f4f5; border-radius:8px; padding:16px; overflow-x:auto; margin-bottom:16px; border:1px solid #dee2e6; line-height:1.45; page-break-inside:avoid; }
-.content-inner code { font-family:'SF Mono',Monaco,Consolas,'Courier New',monospace; font-size:0.9em; }
-.content-inner :not(pre)>code { background:#f4f4f5; padding:2px 6px; border-radius:4px; }
-.content-inner pre code { background:transparent; padding:0; }
-.content-inner blockquote { border-left:4px solid #3182f6; padding:12px 16px; margin:16px 0; color:#495057; background:#f8f9fa; border-radius:0 8px 8px 0; page-break-inside:avoid; }
-.content-inner table { width:100%; border-collapse:collapse; margin-bottom:16px; page-break-inside:auto; }
-.content-inner th,.content-inner td { border:1px solid #dee2e6; padding:10px 12px; text-align:left; }
-.content-inner th { background:#f8f9fa; font-weight:600; }
-.content-inner tr { page-break-inside:avoid; }
-.content-inner hr { border:none; border-top:1px solid #dee2e6; margin:32px 0; }
-.content-inner a { color:#3182f6; text-decoration:none; }
-.content-inner strong { color:#3182f6; }
-.content-inner img { max-width:100%; height:auto; page-break-inside:avoid; }
-h1,h2,h3,h4 { page-break-after:avoid; }
-/* highlight.js github theme */
-pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5px}
-.hljs{color:#24292e;background:#fff}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#d73a49}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#6f42c1}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id,.hljs-variable{color:#005cc5}.hljs-meta .hljs-string,.hljs-regexp,.hljs-string{color:#032f62}.hljs-built_in,.hljs-symbol{color:#e36209}.hljs-code,.hljs-comment,.hljs-formula{color:#6a737d}.hljs-name,.hljs-quote,.hljs-selector-pseudo,.hljs-selector-tag{color:#22863a}.hljs-subst{color:#24292e}.hljs-section{color:#005cc5;font-weight:700}.hljs-bullet{color:#735c0f}.hljs-emphasis{color:#24292e;font-style:italic}.hljs-strong{color:#24292e;font-weight:700}.hljs-addition{color:#22863a;background-color:#f0fff4}.hljs-deletion{color:#b31d28;background-color:#ffeef0}
-</style></head><body><div class="content-inner" id="pdf-content"></div></body></html>`;
-
-// ========================================
 // APPLICATION STATE
 // ========================================
 const state = {
@@ -60,9 +24,15 @@ function init() {
     // Build flat file order for arrow navigation
     buildFileOrder();
 
-    // 기본적으로 모든 카테고리를 닫힌 상태로 설정
+    // 기본적으로 모든 카테고리와 서브카테고리를 닫힌 상태로 설정
     Object.keys(TIL_DATA.categories).forEach(category => {
         state.collapsedCategories.add(category);
+        const subs = TIL_DATA.categories[category].subcategories;
+        if (subs) {
+            Object.keys(subs).forEach(sub => {
+                state.collapsedCategories.add(category + '/' + sub);
+            });
+        }
     });
 
     initFilter();
@@ -105,9 +75,17 @@ function buildFileOrder() {
     state.fileOrder = [];
     const categories = Object.keys(TIL_DATA.categories).sort();
     categories.forEach(category => {
-        TIL_DATA.categories[category].files.forEach(file => {
+        const catData = TIL_DATA.categories[category];
+        catData.files.forEach(file => {
             state.fileOrder.push(file.path);
         });
+        if (catData.subcategories) {
+            Object.keys(catData.subcategories).sort().forEach(sub => {
+                catData.subcategories[sub].files.forEach(file => {
+                    state.fileOrder.push(file.path);
+                });
+            });
+        }
     });
 }
 
@@ -141,11 +119,23 @@ function getFilteredData() {
 
     const filtered = {};
     for (const category in TIL_DATA.categories) {
-        const files = TIL_DATA.categories[category].files.filter(
+        const catData = TIL_DATA.categories[category];
+        const files = catData.files.filter(
             file => isWithinDays(file.createdAt, state.currentFilter)
         );
-        if (files.length > 0) {
-            filtered[category] = { files };
+        const subcategories = {};
+        if (catData.subcategories) {
+            for (const sub in catData.subcategories) {
+                const subFiles = catData.subcategories[sub].files.filter(
+                    file => isWithinDays(file.createdAt, state.currentFilter)
+                );
+                if (subFiles.length > 0) {
+                    subcategories[sub] = { files: subFiles };
+                }
+            }
+        }
+        if (files.length > 0 || Object.keys(subcategories).length > 0) {
+            filtered[category] = { files, subcategories };
         }
     }
     return filtered;
@@ -154,6 +144,16 @@ function getFilteredData() {
 // ========================================
 // FILE MANAGEMENT
 // ========================================
+function countCategoryFiles(categoryData) {
+    let count = categoryData.files.length;
+    if (categoryData.subcategories) {
+        for (const sub in categoryData.subcategories) {
+            count += categoryData.subcategories[sub].files.length;
+        }
+    }
+    return count;
+}
+
 function buildFileList() {
     const container = document.getElementById('file-list');
     container.innerHTML = '';
@@ -164,7 +164,7 @@ function buildFileList() {
     // 필터 적용 시 정보 표시
     if (state.currentFilter !== 'all') {
         const totalFiles = Object.values(filteredCategories)
-            .reduce((sum, cat) => sum + cat.files.length, 0);
+            .reduce((sum, cat) => sum + countCategoryFiles(cat), 0);
         const filterInfo = document.createElement('div');
         filterInfo.className = 'filter-info';
         filterInfo.textContent = `최근 ${state.currentFilter}일: ${totalFiles}개 문서`;
@@ -174,6 +174,7 @@ function buildFileList() {
     categories.forEach(category => {
         const categoryData = filteredCategories[category];
         const isCollapsed = state.collapsedCategories.has(category);
+        const totalCount = countCategoryFiles(categoryData);
 
         const categoryDiv = document.createElement('div');
         categoryDiv.className = 'category';
@@ -183,15 +184,24 @@ function buildFileList() {
         titleDiv.innerHTML = `
             <span class="category-arrow ${isCollapsed ? '' : 'expanded'}">&#9654;</span>
             <span>${category}</span>
-            <span class="category-count">(${categoryData.files.length})</span>
+            <span class="category-count">(${totalCount})</span>
+            <span class="category-print-btn" title="${category} 전체 인쇄">&#128424;</span>
         `;
-        titleDiv.onclick = () => toggleCategory(category);
+        titleDiv.onclick = (e) => {
+            if (e.target.classList.contains('category-print-btn')) {
+                e.stopPropagation();
+                printCategory(category);
+                return;
+            }
+            toggleCategory(category);
+        };
 
         categoryDiv.appendChild(titleDiv);
 
         const fileList = document.createElement('div');
         fileList.className = `file-list ${isCollapsed ? 'collapsed' : ''}`;
 
+        // 직속 파일 렌더링
         categoryData.files.forEach(file => {
             const fileItem = document.createElement('div');
             fileItem.className = 'file-item';
@@ -205,6 +215,48 @@ function buildFileList() {
 
             fileList.appendChild(fileItem);
         });
+
+        // 서브카테고리 렌더링
+        if (categoryData.subcategories) {
+            Object.keys(categoryData.subcategories).sort().forEach(sub => {
+                const subData = categoryData.subcategories[sub];
+                const subKey = category + '/' + sub;
+                const isSubCollapsed = state.collapsedCategories.has(subKey);
+
+                const subDiv = document.createElement('div');
+                subDiv.className = 'subcategory';
+
+                const subTitle = document.createElement('div');
+                subTitle.className = 'subcategory-title';
+                subTitle.innerHTML = `
+                    <span class="category-arrow ${isSubCollapsed ? '' : 'expanded'}">&#9654;</span>
+                    <span>${sub}</span>
+                    <span class="subcategory-count">(${subData.files.length})</span>
+                `;
+                subTitle.onclick = () => toggleCategory(subKey);
+                subDiv.appendChild(subTitle);
+
+                const subFiles = document.createElement('div');
+                subFiles.className = `subcategory-files ${isSubCollapsed ? 'collapsed' : ''}`;
+
+                subData.files.forEach(file => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.textContent = file.title;
+                    fileItem.title = file.createdAt ? `${file.title} (${file.createdAt})` : file.title;
+                    fileItem.onclick = () => loadFile(file.path);
+
+                    if (state.currentFile === file.path) {
+                        fileItem.classList.add('active');
+                    }
+
+                    subFiles.appendChild(fileItem);
+                });
+
+                subDiv.appendChild(subFiles);
+                fileList.appendChild(subDiv);
+            });
+        }
 
         categoryDiv.appendChild(fileList);
         container.appendChild(categoryDiv);
@@ -222,8 +274,15 @@ function toggleCategory(category) {
 
 function findFileByPath(path) {
     for (const category in TIL_DATA.categories) {
-        const file = TIL_DATA.categories[category].files.find(f => f.path === path);
+        const catData = TIL_DATA.categories[category];
+        const file = catData.files.find(f => f.path === path);
         if (file) return file;
+        if (catData.subcategories) {
+            for (const sub in catData.subcategories) {
+                const subFile = catData.subcategories[sub].files.find(f => f.path === path);
+                if (subFile) return subFile;
+            }
+        }
     }
     return null;
 }
@@ -240,10 +299,17 @@ function loadFile(filePath, options = {}) {
         updateHash(filePath);
     }
 
-    // 해당 카테고리 자동 펼치기
-    const category = filePath.split('/')[0];
+    // 해당 카테고리 + 서브카테고리 자동 펼치기
+    const pathParts = filePath.split('/');
+    const category = pathParts[0];
     if (state.collapsedCategories.has(category)) {
         state.collapsedCategories.delete(category);
+    }
+    if (pathParts.length >= 3) {
+        const subKey = pathParts[0] + '/' + pathParts[1];
+        if (state.collapsedCategories.has(subKey)) {
+            state.collapsedCategories.delete(subKey);
+        }
     }
 
     // Render markdown
@@ -266,6 +332,7 @@ function loadFile(filePath, options = {}) {
 
     // Init checkboxes
     initCheckboxes();
+    updateDocNav();
 
     // Show PDF download button
     const pdfBtn = document.getElementById('pdf-download-btn');
@@ -291,6 +358,53 @@ function navigateFile(direction) {
     }
 }
 
+function updateDocNav() {
+    const existing = document.getElementById('doc-nav');
+    if (existing) existing.remove();
+    if (!state.currentFile) return;
+
+    const idx = state.fileOrder.indexOf(state.currentFile);
+    if (idx === -1) return;
+
+    const prevPath = idx > 0 ? state.fileOrder[idx - 1] : null;
+    const nextPath = idx < state.fileOrder.length - 1 ? state.fileOrder[idx + 1] : null;
+    if (!prevPath && !nextPath) return;
+
+    const nav = document.createElement('nav');
+    nav.className = 'doc-nav';
+    nav.id = 'doc-nav';
+
+    if (prevPath) {
+        const prev = findFileByPath(prevPath);
+        const btn = document.createElement('a');
+        btn.className = 'doc-nav-btn doc-nav-prev';
+        btn.onclick = () => navigateFile(-1);
+        btn.innerHTML = '<span class="doc-nav-arrow">&#8592;</span>'
+            + '<span class="doc-nav-label">이전</span>'
+            + '<span class="doc-nav-title">' + escapeHtml(prev.title) + '</span>';
+        nav.appendChild(btn);
+    }
+
+    if (nextPath) {
+        const next = findFileByPath(nextPath);
+        const btn = document.createElement('a');
+        btn.className = 'doc-nav-btn doc-nav-next';
+        btn.onclick = () => navigateFile(1);
+        btn.innerHTML = '<span class="doc-nav-label">다음</span>'
+            + '<span class="doc-nav-arrow">&#8594;</span>'
+            + '<span class="doc-nav-title">' + escapeHtml(next.title) + '</span>';
+        nav.appendChild(btn);
+    }
+
+    document.getElementById('content').appendChild(nav);
+}
+
+function escapeHtml(text) {
+    const d = document.createElement('div');
+    d.textContent = text;
+    return d.innerHTML;
+}
+
 // ========================================
 // SEARCH FUNCTIONALITY
 // ========================================
@@ -298,15 +412,31 @@ function initSearch() {
     const searchItems = [];
 
     for (const category in TIL_DATA.categories) {
-        TIL_DATA.categories[category].files.forEach(file => {
+        const catData = TIL_DATA.categories[category];
+        catData.files.forEach(file => {
             searchItems.push({
                 path: file.path,
                 title: file.title,
                 filename: file.filename,
                 category: category,
+                subcategory: null,
                 content: file.content
             });
         });
+        if (catData.subcategories) {
+            for (const sub in catData.subcategories) {
+                catData.subcategories[sub].files.forEach(file => {
+                    searchItems.push({
+                        path: file.path,
+                        title: file.title,
+                        filename: file.filename,
+                        category: category,
+                        subcategory: sub,
+                        content: file.content
+                    });
+                });
+            }
+        }
     }
 
     state.searchIndex = new Fuse(searchItems, {
@@ -373,7 +503,9 @@ function performSearch(query) {
 
         const metaDiv = document.createElement('div');
         metaDiv.className = 'search-result-meta';
-        metaDiv.textContent = `${item.category} / ${item.filename}`;
+        metaDiv.textContent = item.subcategory
+            ? `${item.category} / ${item.subcategory} / ${item.filename}`
+            : `${item.category} / ${item.filename}`;
 
         resultDiv.appendChild(titleDiv);
         resultDiv.appendChild(metaDiv);
@@ -528,7 +660,7 @@ function initKeyboardShortcuts() {
                 break;
             case 'p':
             case 'P':
-                downloadPDF();
+                printDocument();
                 break;
             case '?':
                 showShortcuts();
@@ -538,44 +670,66 @@ function initKeyboardShortcuts() {
 }
 
 // ========================================
-// PDF DOWNLOAD (window.print() 벡터 방식)
+// PRINT (window.print 벡터 PDF)
 // ========================================
-function downloadPDF() {
+var _originalTitle = null;
+
+function printDocument() {
+    if (!state.currentFile) return;
     var file = findFileByPath(state.currentFile);
     if (!file) return;
-
-    var btn = document.getElementById('pdf-download-btn');
-    btn.textContent = '⏳';
-    btn.disabled = true;
-
-    var iframe = document.createElement('iframe');
-    iframe.style.cssText = 'position:fixed;left:-10000px;top:0;width:900px;height:600px;border:none;';
-    document.body.appendChild(iframe);
-
-    var doc = iframe.contentDocument;
-    doc.open();
-    doc.write(PDF_PRINT_TEMPLATE);
-    doc.close();
-
-    iframe.onload = function() {
-        var target = doc.getElementById('pdf-content');
-        target.innerHTML = marked.parse(file.content);
-        target.querySelectorAll('pre code').forEach(function(block) { hljs.highlightElement(block); });
-
-        setTimeout(function() {
-            // Chrome은 iframe 프린트 시 부모 페이지 title을 파일명으로 사용
-            var originalTitle = document.title;
-            document.title = file.title;
-            iframe.contentWindow.print();
-            document.title = originalTitle;
-            setTimeout(function() {
-                document.body.removeChild(iframe);
-                btn.textContent = '📥';
-                btn.disabled = false;
-            }, 1000);
-        }, 300);
-    };
+    _originalTitle = document.title;
+    document.title = file.title;
+    window.print();
 }
+
+var _printQueue = null;
+
+function printCategory(category) {
+    var catData = TIL_DATA.categories[category];
+    if (!catData) return;
+
+    // 카테고리 내 모든 파일 수집 (직속 + 서브카테고리)
+    var files = [];
+    catData.files.forEach(function(f) { files.push(f); });
+    if (catData.subcategories) {
+        Object.keys(catData.subcategories).sort().forEach(function(sub) {
+            catData.subcategories[sub].files.forEach(function(f) { files.push(f); });
+        });
+    }
+    if (files.length === 0) return;
+
+    _printQueue = { files: files, idx: 0 };
+    _printNext();
+}
+
+function _printNext() {
+    if (!_printQueue || _printQueue.idx >= _printQueue.files.length) {
+        _printQueue = null;
+        return;
+    }
+    var file = _printQueue.files[_printQueue.idx];
+    loadFile(file.path);
+    setTimeout(function() {
+        document.title = file.title;
+        window.print();
+    }, 300);
+}
+
+window.addEventListener('afterprint', function() {
+    if (_originalTitle !== null) {
+        document.title = _originalTitle;
+        _originalTitle = null;
+    }
+    if (!_printQueue) return;
+    _printQueue.idx++;
+    if (_printQueue.idx < _printQueue.files.length) {
+        setTimeout(_printNext, 500);
+    } else {
+        _printQueue = null;
+    }
+});
+
 
 // ========================================
 // QUICK ACTIONS
@@ -588,6 +742,11 @@ function scrollToTop() {
 function showShortcuts() {
     const modal = document.getElementById('shortcuts-modal');
     if (modal) modal.classList.toggle('show');
+}
+
+function toggleTOC() {
+    const toc = document.getElementById('toc-panel');
+    if (toc) toc.classList.toggle('open');
 }
 
 // ========================================
@@ -631,7 +790,7 @@ let mobileSidebarOpen = false;
 
 function openMobileSidebar() {
     const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('overlay');
+    const overlay = document.getElementById('overlay') || document.getElementById('sidebar-overlay');
     if (sidebar) sidebar.classList.add('open');
     if (overlay) overlay.classList.add('show');
     mobileSidebarOpen = true;
@@ -639,7 +798,7 @@ function openMobileSidebar() {
 
 function closeMobileSidebar() {
     const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('overlay');
+    const overlay = document.getElementById('overlay') || document.getElementById('sidebar-overlay');
     if (sidebar) sidebar.classList.remove('open');
     if (overlay) overlay.classList.remove('show');
     mobileSidebarOpen = false;
@@ -654,12 +813,12 @@ function toggleSidebar() {
 }
 
 function initMobileMenu() {
-    const menuButton = document.getElementById('menu-toggle');
+    const menuButton = document.getElementById('menu-toggle') || document.getElementById('menu-button');
     if (menuButton) {
         menuButton.addEventListener('click', toggleSidebar);
     }
 
-    const overlay = document.getElementById('overlay');
+    const overlay = document.getElementById('overlay') || document.getElementById('sidebar-overlay');
     if (overlay) {
         overlay.addEventListener('click', closeMobileSidebar);
     }
