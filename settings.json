@@ -6,6 +6,10 @@
     "commit": "",
     "pr": ""
   },
+  "statusLine": {
+    "type": "command",
+    "command": "bash /Users/buzz/.claude/statusline-command.sh"
+  },
   "permissions": {
     "allow": [
       "Bash(python3:*)",
@@ -200,10 +204,6 @@
     "deny": [],
     "ask": [],
     "defaultMode": "default"
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "~/.claude/statusline.sh"
   },
   "enabledPlugins": {},
   "language": "korean"
