@@ -57,9 +57,52 @@ Java/Spring 코드를 클린 코드 원칙에 따라 리팩터링합니다.
 ### 4단계: 코드 포매팅
 
 - **수정한 파일은 반드시 포매팅을 실행한다.**
-- 프로젝트에 설정된 포매터가 있으면 해당 포매터를 사용한다. (예: `./mvnw spotless:apply`, IDE 포매터 등)
-- 포매터가 없는 경우, Google Java Style 또는 프로젝트의 기존 코드 스타일에 맞춰 일관성을 유지한다.
 - 포매팅 대상은 리팩터링으로 수정된 파일에 한정한다.
+- 프로젝트 포매터 설정 파일(`callbuslab_official_formatter.xml`)을 읽고 아래 규칙을 적용한다.
+
+#### 포매터 핵심 규칙 (`callbuslab_official_formatter.xml` 기준)
+
+| 규칙 | 값 | 설명 |
+|------|----|------|
+| `RIGHT_MARGIN` | 140 | 한 줄 최대 140자 |
+| `BLANK_LINES_AROUND_FIELD` | 1 | **필드 사이 빈 줄 1개** |
+| `BLANK_LINES_AFTER_CLASS_HEADER` | 1 | 클래스 `{` 뒤 빈 줄 1개 |
+| `KEEP_BLANK_LINES_IN_DECLARATIONS` | 1 | 선언부 빈 줄 최대 1개 유지 |
+| `KEEP_BLANK_LINES_IN_CODE` | 1 | 코드 내 빈 줄 최대 1개 유지 |
+| `CALL_PARAMETERS_WRAP` | 5 (always) | 메서드 호출 파라미터 항상 줄바꿈 |
+| `CALL_PARAMETERS_LPAREN_ON_NEXT_LINE` | true | 호출 `(` 다음 줄로 |
+| `CALL_PARAMETERS_RPAREN_ON_NEXT_LINE` | true | 호출 `)` 다음 줄로 |
+| `ALIGN_MULTILINE_PARAMETERS_IN_CALLS` | true | 호출 파라미터 정렬 |
+| `METHOD_PARAMETERS_WRAP` | 1 (if long) | 메서드 선언 파라미터 길면 줄바꿈 |
+| `METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE` | true | 선언 `(` 다음 줄로 |
+| `METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE` | true | 선언 `)` 다음 줄로 |
+| `IF_BRACE_FORCE` / `FOR_BRACE_FORCE` / `WHILE_BRACE_FORCE` | 3 (always) | 중괄호 항상 사용 |
+| `GENERATE_FINAL_LOCALS` | true | 지역 변수에 `final` |
+| `GENERATE_FINAL_PARAMETERS` | true | 파라미터에 `final` |
+
+#### 포매팅 적용 예시
+
+```java
+// 필드 사이 빈 줄 (BLANK_LINES_AROUND_FIELD = 1)
+private final String serviceName;
+
+private final long initialPeriodMs;
+
+private final int maxAttempts;
+
+// 메서드 호출 파라미터 줄바꿈 (CALL_PARAMETERS_WRAP = 5)
+return new RetryableServerErrorRetryer(
+        serviceName,
+        initialPeriodMs,
+        maxPeriodMs,
+        maxAttempts
+);
+
+// 메서드 선언 파라미터 (METHOD_PARAMETERS_WRAP = 1, 140자 초과 시)
+public RetryableServerErrorRetryer(
+        final String serviceName, final long period, final long maxPeriod, final int maxAttempts
+) {
+```
 
 ### 5단계: 최종 검토 및 확정
 
