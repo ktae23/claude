@@ -117,24 +117,23 @@ grep -rn "/home/" $REPO_DIR/skills/{name}/ 2>/dev/null || true
 
 ### Step 5. 심링크 전환
 
-원본을 백업하고 레포를 가리키는 심링크로 교체합니다:
+원본을 삭제하고 레포를 가리키는 심링크로 교체합니다:
 
 **스킬:**
 ```bash
-TIMESTAMP=$(date +%Y%m%d%H%M%S)
-mv ~/.claude/skills/{name} ~/.claude/skills/{name}.backup.$TIMESTAMP
+rm -rf ~/.claude/skills/{name}
 ln -s $REPO_DIR/skills/{name} ~/.claude/skills/{name}
 ```
 
 **커맨드:**
 ```bash
-mv ~/.claude/commands/{name} ~/.claude/commands/{name}.backup.$TIMESTAMP
+rm ~/.claude/commands/{name}
 ln -s $REPO_DIR/commands/{name} ~/.claude/commands/{name}
 ```
 
 **Statusline:**
 ```bash
-mv ~/.claude/{name} ~/.claude/{name}.backup.$TIMESTAMP
+rm ~/.claude/{name}
 ln -s $REPO_DIR/{name} ~/.claude/{name}
 ```
 
@@ -174,5 +173,5 @@ git push
 
 - 이미 레포에 있는 항목은 건너뜁니다 (덮어쓰기 방지)
 - 심링크 상태인 항목도 건너뜁니다 (이미 연결됨)
-- 백업 파일은 `.backup.TIMESTAMP` 접미사로 생성됩니다
+- 심링크 전환 시 원본은 바로 삭제합니다 (레포에 복사 완료된 상태이므로 백업 불필요)
 - tarot 등 PC 전용 스킬도 목록에 나타나지만 선택하지 않으면 동기화되지 않습니다
