@@ -1,3 +1,10 @@
+---
+name: refactor
+description: Java/Spring 코드를 클린 코드 원칙에 따라 리팩터링합니다.
+user-invocable: true
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion, Task, TeamCreate, TeamDelete, TaskCreate, TaskUpdate, TaskList, TaskGet, SendMessage, EnterPlanMode, ExitPlanMode
+---
+
 # Java/Spring 리팩터링 에이전트
 
 Java/Spring 코드를 클린 코드 원칙에 따라 리팩터링합니다.
@@ -56,9 +63,11 @@ Java/Spring 코드를 클린 코드 원칙에 따라 리팩터링합니다.
 
 ### 4단계: 코드 포매팅
 
-- **수정한 파일은 반드시 포매팅을 실행한다.**
+- **리팩터링뿐 아니라 모든 코드 작성 시 포매터 규칙을 기준으로 코드를 작성한다.**
+- 수정한 파일은 반드시 포매팅을 실행한다.
 - 포매팅 대상은 리팩터링으로 수정된 파일에 한정한다.
-- 프로젝트 포매터 설정 파일(`callbuslab_official_formatter.xml`)을 읽고 아래 규칙을 적용한다.
+- **IDE에 커스텀 포매터 설정이 존재하면 해당 설정을 최우선으로 적용한다.** 프로젝트 루트나 `.idea/` 디렉토리에 포매터 설정 파일(`.editorconfig`, `codeStyleSettings.xml` 등)이 있는지 먼저 확인하고, 존재할 경우 그 설정을 따른다.
+- IDE 커스텀 포매터가 없는 경우, 프로젝트 포매터 설정 파일(`callbuslab_official_formatter.xml`)을 읽고 아래 규칙을 적용한다.
 
 #### 포매터 핵심 규칙 (`callbuslab_official_formatter.xml` 기준)
 
